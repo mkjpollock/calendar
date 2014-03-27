@@ -37,7 +37,7 @@
     <type label="SET" length="1" sql="SET" quote=""/>
     <type label="Bit" length="0" sql="bit" quote=""/>
   </group>
-</datatypes><table x="50" y="86" name="events">
+</datatypes><table x="44" y="89" name="events">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -51,7 +51,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="240" y="1" name="dates">
+<table x="240" y="1" name="occurances">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>

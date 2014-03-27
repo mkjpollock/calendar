@@ -12,9 +12,9 @@ def main_menu
   until choice == 'x'
     puts "\nMAIN MENU"
     puts "============"
-    puts "\nPlease press 'e' for the event menu"
-    puts "Press 't' to enter a to-do item"
-    puts "Press 'x' to exit"
+    puts "\nPress 'E' for the event menu"
+    puts "Press 'T' for the to-do menu"
+    puts "Press 'X' to exit"
     choice = gets.chomp.downcase
     case choice
     when 'e'
@@ -27,6 +27,54 @@ def main_menu
   end
 end
 
+def to_do_menu
+  system "clear"
+  puts "TO DO MENU"
+  puts "============"
+  puts "\nPress 'A' to add a new to-do item"
+  puts "Press 'V' to view all to-do items"
+  puts "Press 'N' to add a note to a to-do item"
+  puts "Press 'M' to go to main menu"
+  user_input = gets.chomp.upcase
+  case user_input
+  when 'A'
+    add_to_do
+  when 'V'
+    view_to_do
+  when 'N'
+    note_to_do
+  when 'M'
+    main_menu
+  else
+    puts "Invalid input"
+  end
+end
+
+def add_to_do
+  puts "\nPlease enter the description of your to-do item"
+  description_input = gets.chomp
+  to_do = To_do.create(:description => description_input)
+  puts "\nCongratulations! You have successfully added the to-do item: #{to_do.description}"
+end
+
+def view_to_do
+  puts "\nHere are your to-dos:"
+  To_do.all.each_with_index do |to_do, index|
+    puts "\n#{index + 1}. #{to_do.description}"
+    to_do.notes.each { |note| puts "- #{note.description}"}
+  end
+end
+
+def note_to_do
+  puts "Which to_do would you like attach a note to?"
+  to_do_description = gets.chomp
+  to_do = To_do.find_by :description => to_do_description
+  puts "Type your note here:"
+  note_description = gets.chomp
+  note = Note.create(:description => note_description, :notable_id => to_do.id, :notable_type => "To_do")
+  puts "Note '#{to_do.notes.last.description}' added to '#{note.notable.description}'"
+end
+
 def event_menu
   system "clear"
   choice = nil
@@ -37,6 +85,7 @@ def event_menu
     puts "Press 'E' to edit an event"
     puts "Press 'D' to delete an event"
     puts "Press 'V' to view an event"
+    puts "Press 'N' to attach a note to an event"
     puts "Press 'M' to return to main menu"
     choice = gets.chomp.upcase
     case choice
@@ -44,12 +93,16 @@ def event_menu
       add_event
     when 'E'
       edit_event
-    when 'V'
-      view_event_menu
     when 'D'
       delete_event
+    when 'V'
+      view_event_menu
+    when 'N'
+      add_note_to_event
     when 'M'
       puts "Returning to main menu...\n\n"
+    else
+      puts "Invalid selection, jerk!"
     end
   end
 end
@@ -87,8 +140,9 @@ def time_loop(start, finish, period)
     occurances = Occurance.where('start > ? AND start < ?', start.send("beginning_of_#{period}".to_sym), finish.send("end_of_#{period}".to_sym))
     puts "\nEvents for #{start.strftime('%m/%d/%Y')} - #{finish.strftime('%m/%d/%Y')}"
   end
-  occurances.each do |occurance|
-    puts "#{occurance.event.description} #{occurance.start.strftime("%l:%M%p %m/%d/%Y")}"
+  occurances.each_with_index do |occurance, index|
+    puts "\n#{index + 1}. #{occurance.event.description} #{occurance.start.strftime("%l:%M%p %m/%d/%Y")}"
+    occurance.event.notes.each { |note| puts "- #{note.description}" }
   end
   next_previous_menu(start, finish, period)
 end
@@ -112,51 +166,9 @@ def next_previous_menu(start, finish, period)
       time_loop(start.send("next_#{period}".to_sym).send("beginning_of_#{period}".to_sym), finish.send("next_#{period}".to_sym).send("end_of_#{period}".to_sym), period)
     end
   when 'V'
-    event_menu
+    puts "Returning to event menu..."
   else
     puts "Invalid input, sucka!"
-  end
-end
-
-# def view_today_events(start, finish)
-  # occurances = Occurance.where('start > ? AND start < ?', Time.now.beginning_of_day, Time.now.end_of_day)
-  # puts "\nToday's events"
-  # occurances.each do |occurance|
-  #   puts "#{occurance.event.description} #{occurance.start.strftime("%l:%M%p %m/%d/%Y")}"
-  # end
-  # puts "Press 'P' to view events from previous day"
-  # puts "Press 'N' to view events for the next day"
-  # user_input = gets.chomp.upcase
-  # case user_input
-  # when 'P'
-  # occurances = Occurance.where('start > ? AND start < ?', Time.now.beginning_of_day, Time.now.end_of_day)
-  # puts "\nToday's events"
-  # occurances.each do |occurance|
-  #   puts "#{occurance.event.description} #{occurance.start.strftime("%l:%M%p %m/%d/%Y")}"
-  # end
-# end
-
-# def view_week_events
-#   occurances = Occurance.where('start > ? AND start < ?', Time.now.beginning_of_week, Time.now.end_of_week)
-#   puts "\nEvents for the week of #{Time.now.beginning_of_week.strftime('%m/%d/%Y')} - #{Time.now.end_of_week.strftime('%m/%d/%Y')}"
-#   occurances.each do |occurance|
-#     puts "#{occurance.event.description} #{occurance.start.strftime("%l:%M%p %m/%d/%Y")}"
-#   end
-# end
-
-# def view_month_events
-#   occurances = Occurance.where('start > ? AND start < ?', Time.now.beginning_of_month, Time.now.end_of_month)
-#   puts "\nEvents for #{Time.now.beginning_of_month.strftime('%B')}"
-#   occurances.each do |occurance|
-#     puts "#{occurance.event.description} #{occurance.start.strftime("%l:%M%p %m/%d/%Y")}"
-#   end
-# end
-
-def view_all_future_events
-  occurances = Occurance.where('start > ?', Time.now)
-  puts "\nAll future events"
-  occurances.each do |occurance|
-    puts "#{occurance.event.description} #{occurance.start.strftime("%l:%M%p %m/%d/%Y")}"
   end
 end
 
@@ -203,6 +215,16 @@ def edit_event
   occurance.update(:start => start_input, :end => end_input)
   puts "Event #{event.description} at #{event.location} Updated"
   puts "New time: #{occurance.start.strftime("%l:%M%p %m/%d/%Y")} - #{occurance.end.strftime("%l:%M%p %m/%d/%Y")}"
+end
+
+def add_note_to_event
+  puts "Which event would you like attach a note to?"
+  event_description = gets.chomp
+  event = Event.find_by :description => event_description
+  puts "Type your note here:"
+  note_description = gets.chomp
+  note = Note.create(:description => note_description, :notable_id => event.id, :notable_type => "Event")
+  puts "Note '#{event.notes.last.description}' added to '#{note.notable.description}'"
 end
 
 main_menu
