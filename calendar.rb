@@ -1,3 +1,4 @@
+require 'textacular/tasks'
 require 'bundler/setup'
 Bundler.require(:default)
 
@@ -14,6 +15,7 @@ def main_menu
     puts "============"
     puts "\nPress 'E' for the event menu"
     puts "Press 'T' for the to-do menu"
+    puts "Press 'S' to search"
     puts "Press 'X' to exit"
     choice = gets.chomp.downcase
     case choice
@@ -21,9 +23,28 @@ def main_menu
       event_menu
     when 't'
       to_do_menu
+    when 's'
+      search
     when 'x'
       puts "Goodbye!"
     end
+  end
+end
+
+def search
+  puts "Enter your search term(s):"
+  search = gets.chomp
+  events = Event.basic_search(:description => search)
+  puts "\nFound #{events.count} event(s):"
+  events.each_with_index do |event, index|
+    puts "#{index + 1}. #{event.description}"
+    event.notes.each { |note| puts "- #{note.description}" }
+  end
+  to_dos = To_do.basic_search(:description => search)
+  puts "\nFound #{to_dos.count} to-do(s):"
+  to_dos.each_with_index do |to_do, index|
+    puts "#{index + 1}. #{to_do.description}"
+    to_do.notes.each { |note| puts "- #{note.description}" }
   end
 end
 
@@ -187,14 +208,19 @@ def add_event
   description_input = gets.chomp
   puts "Please enter the location of your event"
   location_input = gets.chomp
-  puts "Please enter the start date of your event as YYYY-MM-DD HH:MM"
+  puts "Please enter the start date of your event (e.g. April 21, 1992)"
   start_input = gets.chomp
-  puts "Please enter the end date of your event YYYY-MM-DD HH:MM"
+  puts "Please enter the end date of your event (e.g. April 21, 1992)"
   end_input = gets.chomp
   @event = Event.create(:description => description_input, :location => location_input)
-  @occurance = Occurance.create(:start => start_input, :end => end_input, :event_id => @event.id)
-  puts "\nCongratulations! You have successfully added the event: #{@event.description}"
-  puts "At the following time: #{@occurance.start.strftime("%l:%M%p %m/%d/%Y")} until #{@occurance.end.strftime("%l:%M%p %m/%d/%Y")}"
+  @occurance = Occurance.new(:start => start_input, :end => end_input, :event_id => @event.id)
+  if @occurance.save
+    puts "\nCongratulations! You have successfully added the event: #{@event.description}"
+    puts "At the following time: #{@occurance.start.strftime("%l:%M%p %m/%d/%Y")} until #{@occurance.end.strftime("%l:%M%p %m/%d/%Y")}"
+  else
+    puts "Try again, bum!"
+    add_event
+  end
 end
 
 def edit_event
