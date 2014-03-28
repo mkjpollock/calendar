@@ -8,7 +8,60 @@ database_configurations = YAML::load(File.open('./db/config.yml'))
 development_configuration = database_configurations['development']
 ActiveRecord::Base.establish_connection(development_configuration)
 
+def ascii_art
+  system "clear"
+  puts '
+
+                                o$o
+                                $  "o        o$o
+                 o              $    "o     o" "o   o
+                 "$$"""ooooo    $      "o  o"   "o $ $  $
+                   "$oo    ""$o $        "o"     "o" "o $      oo
+                      """oo   ""$o        ""      "   "o$o oo""  $
+                          "$oo   "                   $"" ""   ooo$
+                  ooooooooo    oooooo""""           $   o       """"oo
+         """""""""        ""                        $   $$  $  "ooo  $
+                 o                          """oo  $   o" $o"$   $ ""
+         oooooo$"$""""""                    ooo   o"   $     "ooo"
+                 $                             " o$   $
+                 $                         ooo$$$$"  o"""o
+                 $          ooooooo  ooo$$$"""o$"$   $   $
+                 "o      oo$"ooooo$$$"""   oooo o"  o"   $
+                 o$o"""$o$$$"""$$$$$      o"   """""$oo$"
+                $oo$$$"$$"$$   $$$$$      $oo           "$"
+                $$$$$  $$o$$$$$$$$"      $   """"oooo   o"
+                 $$$$$$$"   """""  oo    $o          ""$
+                  "$"" $            $   $  """oo      $
+                   $   ""ooo""     o"  o""oo    """oo"
+                   $            oo"    $    """oo  o"
+         oooooo    $       """""      ""oo       $"
+     o"""     ""o   $oo       ooooo"""    """oo  $
+     $oo"" o"   "o     "$$$"""     """ooo      $"
+     o"   $   $  "o   o"o  """oooo       ""oo  $
+     $   $$  o"o  "o $ $          """ooo     "$
+      """  ""  $    ""o$                """"oo"
+                $   o $"""""""""""ooooooo    $
+                 "o" o"                 ""$o$
+                     $""""""""""$oooo       $
+                     $              """$oo  $
+                     $"""""""oooooooooo  """$
+                     $                 """oo$
+                     $""""""""""""""""oooo  $
+                      $   oooooooooooo    "o $
+                      $"""oooooooooooo""""oo$$oo
+                       o$$$$$$$$$$$$$$$$$$o$$$$$o$""$o
+                       $$$$$$$$$$$$$$$$$$$$$$$$$$o   $
+                        "$$$$$$$$$$$$$$$$$$$$$$" o"  $
+                           "$$$$$$$$$$$$$$$$$$"o"  o$
+                            $"ooooo"""$"oooooo"   ""
+                             $       $          $
+                              $o      $o      o"
+               $$$$$$$$$$$$$$$$"$ooo$"" "ooo""$$$$$$$$$$$$$$$$$$$$$$$$$$"
+'
+end
+
 def main_menu
+  ascii_art
   choice = nil
   until choice == 'x'
     puts "\nMAIN MENU"
@@ -161,7 +214,8 @@ def time_loop(start, finish, period)
     occurances = Occurance.where('start > ? AND start < ?', start.send("beginning_of_#{period}".to_sym), finish.send("end_of_#{period}".to_sym))
     puts "\nEvents for #{start.strftime('%m/%d/%Y')} - #{finish.strftime('%m/%d/%Y')}"
   end
-  occurances.each_with_index do |occurance, index|
+  sorted_occurances = occurances.sort_by &:start
+  sorted_occurances.each_with_index do |occurance, index|
     puts "\n#{index + 1}. #{occurance.event.description} #{occurance.start.strftime("%l:%M%p %m/%d/%Y")}"
     occurance.event.notes.each { |note| puts "- #{note.description}" }
   end
@@ -272,7 +326,7 @@ def edit_event
   puts "Which event would you like edit?"
   description = gets.chomp
   event = Event.find_by :description => description
-  #FOR MULTIPLES, USE WHERE THEN LOOP THROUGH
+  #Add repeat?
   occurance = Occurance.find_by :event_id => event.id
   puts "Enter the updated event description"
   description_input = gets.chomp
