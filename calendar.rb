@@ -213,14 +213,59 @@ def add_event
   puts "Please enter the end date of your event (e.g. April 21, 1992)"
   end_input = gets.chomp
   @event = Event.create(:description => description_input, :location => location_input)
-  @occurance = Occurance.new(:start => start_input, :end => end_input, :event_id => @event.id)
-  if @occurance.save
+  occurance = Occurance.new(:start => start_input, :end => end_input, :event_id => @event.id)
+  if occurance.save
     puts "\nCongratulations! You have successfully added the event: #{@event.description}"
-    puts "At the following time: #{@occurance.start.strftime("%l:%M%p %m/%d/%Y")} until #{@occurance.end.strftime("%l:%M%p %m/%d/%Y")}"
+    puts "At the following time: #{occurance.start.strftime("%l:%M%p %m/%d/%Y")} until #{occurance.end.strftime("%l:%M%p %m/%d/%Y")}"
   else
     puts "Try again, bum!"
     add_event
   end
+  repeat_menu(occurance)
+end
+
+def repeat_menu(occurance)
+  puts "\nHow often would you like this event to repeat?"
+  puts "Enter 'daily', 'weekly', 'monthly', or 'never'"
+  user_input = gets.chomp.downcase
+  if user_input != 'never'
+    puts "\nHow many times would you like this event to repeat?"
+    repeat_times = gets.chomp
+  end
+  case user_input
+  when 'daily'
+    repeat_daily(occurance.start, occurance.end, repeat_times.to_i)
+  when 'weekly'
+    repeat_weekly(occurance.start, occurance.end, repeat_times.to_i)
+  when 'monthly'
+    repeat_monthly(occurance.start, occurance.end, repeat_times.to_i)
+  when 'never'
+  else
+    puts "Invalid selection, monkey-brain!"
+  end
+  puts "Events entered!"
+end
+
+def repeat_daily(start, finish, length)
+  if length != 0
+    occurance = Occurance.create(:start => start.tomorrow, :end => finish.tomorrow, :event_id => @event.id)
+    repeat_daily(occurance.start, occurance.end, length -= 1)
+  end
+end
+
+def repeat_weekly(start, finish, length)
+  if length != 0
+    occurance = Occurance.create(:start => start + 604_800, :end => finish + 604_800, :event_id => @event.id)
+    repeat_weekly(occurance.start, occurance.end, length -= 1)
+  end
+end
+
+def repeat_monthly(start, finish, length)
+  if length != 0
+    occurance = Occurance.create(:start => start + 2_628_000, :end => finish + 2_628_000, :event_id => @event.id)
+    repeat_monthly(occurance.start, occurance.end, length -= 1)
+  end
+  # Doesn't skip to the next month exactly...
 end
 
 def edit_event
